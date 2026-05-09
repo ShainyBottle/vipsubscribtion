@@ -4,35 +4,31 @@ local firebaseUrl = "https://dfsdsf-f793e-default-rtdb.firebaseio.com"
 local subscriptionId = "EXP-7938720910285079125"
 
 local requestId = HttpService:GenerateGUID(false):gsub("-", "")
-local requestData = {
+local requestData = HttpService:JSONEncode({
     userId = player.UserId,
     subscriptionId = subscriptionId,
     requestId = requestId,
     timestamp = os.time()
-}
+})
 
-local body = HttpService:JSONEncode(requestData)
-local putUrl = firebaseUrl .. "/Queue/" .. requestId .. ".json"
-
-local success, err = pcall(function()
-    game:HttpGet(putUrl, body, "application/json", "PUT")
-end)
-
-if not success then
-    warn("Ошибка записи в Firebase: ", err)
-    return
-end
+syn.request({
+    Url = firebaseUrl .. "/Queue/" .. requestId .. ".json",
+    Method = "PUT",
+    Headers = {["Content-Type"] = "application/json"},
+    Body = requestData
+})
 
 local resultUrl = firebaseUrl .. "/Results/" .. requestId .. ".json"
 
 for i = 1, 30 do
     wait(1)
-    local success2, response = pcall(function()
-        return game:HttpGet(resultUrl)
-    end)
-
-    if success2 and response and response ~= "null" then
-        local data = HttpService:JSONDecode(response)
+    local response = syn.request({
+        Url = resultUrl,
+        Method = "GET"
+    })
+    
+    if response and response.StatusCode == 200 and response.Body ~= "null" then
+        local data = HttpService:JSONDecode(response.Body)
         if data and data.hasSubscription then
             print(1)
         end
