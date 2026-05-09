@@ -1,37 +1,18 @@
 local player = game:GetService("Players").LocalPlayer
 local HttpService = game:GetService("HttpService")
 local firebaseUrl = "https://dfsdsf-f793e-default-rtdb.firebaseio.com"
-local subscriptionId = "EXP-7938720910285079125"
 
-local requestId = HttpService:GenerateGUID(false):gsub("-", "")
-local requestData = HttpService:JSONEncode({
-    userId = player.UserId,
-    subscriptionId = subscriptionId,
-    requestId = requestId,
-    timestamp = os.time()
+local username = player.Name
+
+local response = request({
+    Url = firebaseUrl .. "/Subscriptions/" .. username .. ".json",
+    Method = "GET"
 })
 
-syn.request({
-    Url = firebaseUrl .. "/Queue/" .. requestId .. ".json",
-    Method = "PUT",
-    Headers = {["Content-Type"] = "application/json"},
-    Body = requestData
-})
-
-local resultUrl = firebaseUrl .. "/Results/" .. requestId .. ".json"
-
-for i = 1, 30 do
-    wait(1)
-    local response = syn.request({
-        Url = resultUrl,
-        Method = "GET"
-    })
+if response.Body ~= "null" then
+    local data = HttpService:JSONDecode(response.Body)
     
-    if response and response.StatusCode == 200 and response.Body ~= "null" then
-        local data = HttpService:JSONDecode(response.Body)
-        if data and data.hasSubscription then
-            print(1)
-        end
-        break
+    if data.expiresAt > os.time() then
+        print(1)
     end
 end
